@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow
+      http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+      start-state="identifyCustomer"><!--指定开始流程状态-->
+    <!--创建Order实例：顾客信息、订购的披萨列表、支付详情-->
+    <var name="order" class="ypp.SpringFlow.flowDome.domain.Order"/>
+    <on-start>
+        <set name="flowScope.order" value="new ypp.SpringFlow.flowDome.domain.Order()"/>
+    </on-start>
+    <!--调用客户子流程-->
+    <subflow-state id="identifyCustomer" subflow="customer">
+        <input name="order" value="order"/>
+        <output name="customer" value="order.customer"/>
+        <transition on="customerReady" to="buildOrder"/>
+    </subflow-state>
+    <!--调用订单子流程-->
+    <subflow-state id="buildOrder" subflow="order">
+        <input name="order" value="order"/>
+        <transition on="orderCreated" to="takePayment"/>
+    </subflow-state>
+    <!--调用支付子流程-->
+    <subflow-state id="takePayment" subflow="payment">
+        <input name="order" value="order"/>
+        <transition on="paymentTaken" to="saveOrder"/>
+    </subflow-state>
+    <!--保存订单-->
+    <action-state id="saveOrder">
+        <evaluate expression="pizzaFlowActions.saveOrder(order)"/>
+        <transition to="thankCustomer"/>
+    </action-state>
+    <!--感谢顾客-->
+    <view-state id="thankCustomer">
+        <transition to="endState"/>
+    </view-state>
+    <!--结束-->
+    <end-state id="endState"/>
+    <global-transitions>
+        <!--全局取消转移-->
+        <transition on="cancel" to="endState"/>
+    </global-transitions>
+</flow>
